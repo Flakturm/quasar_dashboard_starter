@@ -24,18 +24,7 @@
           :icon="$q.dark.isActive ? 'nights_stay' : 'wb_sunny'"
         />
 
-        <q-btn
-          v-if="!loggedIn"
-          to="/login"
-          flat
-          icon-right="account_circle"
-          size="lg"
-        />
-
-        <div
-          v-else
-          class="q-pl-sm q-gutter-sm row items-center no-wrap"
-        >
+        <div class="q-pl-sm q-gutter-sm row items-center no-wrap">
           <q-btn
             dense
             flat
@@ -92,7 +81,7 @@
           <hr />
           <q-scroll-area class="full-height">
             <q-list padding>
-              <sidebar :items="routes" />
+              <sidebar />
             </q-list>
           </q-scroll-area>
         </div>
@@ -116,15 +105,15 @@ export default {
   components: { Sidebar },
 
   computed: {
-    ...mapState('auth', ['loggedIn', 'details']),
+    ...mapState('auth', ['details']),
 
     avatar () {
       return this.details.avatar ? this.details.avatar : 'https://avataaars.io/?avatarStyle=Circle&topType=WinterHat3&accessoriesType=Sunglasses&hatColor=Red&facialHairType=BeardMagestic&facialHairColor=Brown&clotheType=Hoodie&clotheColor=Heather&eyeType=Default&eyebrowType=RaisedExcitedNatural&mouthType=Smile&skinColor=Light'
-    },
-
-    routes () {
-      return this.$router.options.routes.filter(route => route.name && route.name.includes('dashboard'))
     }
+  },
+
+  mounted () {
+    this.getState()
   },
 
   data () {
@@ -134,7 +123,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('auth', ['logout']),
+    ...mapActions('auth', ['getState', 'logout']),
   }
 }
 </script>
@@ -156,6 +145,10 @@ export default {
 
 .tab-active {
   background-color: green;
+}
+
+body {
+  background: #f1f1f1 !important;
 }
 
 .header_normal {

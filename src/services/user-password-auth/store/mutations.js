@@ -1,15 +1,30 @@
-import { LocalStorage } from "quasar";
+import { LocalStorage } from 'quasar'
+import defaultState from './state'
 
 function setLoggedIn(state, value) {
-  state.loggedIn = value;
+  state.loggedIn = value
 
-  LocalStorage.set("user.loggedIn", value);
+  LocalStorage.set('user.loggedIn', value)
 }
 
 function setDetails(state, payload) {
-  state.details = payload;
+  const { roles, permissions, ...reducedPayload } = payload
+  state.details = reducedPayload
 
-  LocalStorage.set("user.details", payload);
+  // LocalStorage.set('user.details', reducedPayload)
 }
 
-export { setLoggedIn, setDetails };
+function setRoles(state, payload) {
+  state.roles = payload.roles
+}
+
+function setPermissions(state, payload) {
+  state.permissions = payload.permissions
+}
+
+function resetState(state) {
+  Object.assign(state, defaultState())
+  LocalStorage.set('user.loggedIn', false)
+}
+
+export { setLoggedIn, setDetails, setRoles, setPermissions, resetState }

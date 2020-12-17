@@ -14,30 +14,37 @@ const routes = [
     component: DashboardLayout,
     meta: {
       title: '總覽',
-      icon: 'fas fa-chart-bar'
+      icon: 'fas fa-chart-bar',
+      root: true,
+      children: false
     },
     children: [
       {
         path: '',
         name: 'dashboard.home',
-        component: () => import('pages')
+        component: () => import('pages'),
+        meta: {
+          title: '總覽'
+        }
       }
     ]
   },
   // dashboard users
   {
     path: '/users',
-    name: 'dashboard.users',
+    name: 'users',
     redirect: '/users',
     component: DashboardLayout,
     meta: {
       title: '用戶',
-      icon: 'fas fa-users'
+      icon: 'fas fa-users',
+      root: true,
+      children: true
     },
     children: [
       {
         path: '',
-        name: 'users.root',
+        name: 'users.members',
         component: () => import('pages/users'),
         meta: {
           title: '一般用戶'
@@ -48,7 +55,8 @@ const routes = [
         name: 'users.admin',
         component: () => import('pages/users'),
         meta: {
-          title: '後台管理者'
+          title: '後台管理者',
+          roles: ['admin']
         }
       },
       {
@@ -56,7 +64,8 @@ const routes = [
         name: 'users.permissions',
         component: () => import('pages/users/Permissions'),
         meta: {
-          title: '後台管理權限'
+          title: '後台管理權限',
+          permissions: ['manage permissions']
         }
       }
     ]

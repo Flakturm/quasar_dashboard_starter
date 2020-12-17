@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const sanctum = '/sanctum/csrf-cookie'
 
-function login({ commit }, payload) {
+function login({ commit, dispatch }, payload) {
   return new Promise((resolve, reject) => {
     axios
       .get(sanctum)
@@ -14,16 +14,19 @@ function login({ commit }, payload) {
             commit('setLoggedIn', true)
 
             axios
-              .get('/api/' + process.env.DASHBOARD_API_PREFIX + '/user')
+              .get('/api/me')
               .then((response) => {
-                commit('setDetails', response.data.data)
+                const data = response.data.data
+                commit('setDetails', data)
+                commit('setRoles', data)
+                commit('setPermissions', data)
 
                 resolve()
 
                 this.$router.replace({ name: 'dashboard' })
               })
               .catch((error) => {
-                commit('setLoggedIn', false)
+                commit('resetState')
                 reject(error)
               })
           })
@@ -39,7 +42,8 @@ function login({ commit }, payload) {
 
 function logout({ commit }) {
   const reset = () => {
-    commit('setLoggedIn', false)
+    commit('resetState')
+    commit('permission/resetState', null, { root: true })
     this.$router.replace({ name: 'login' })
   }
 
@@ -49,17 +53,36 @@ function logout({ commit }) {
       reset()
     })
     .catch(() => {
-      // showErrorNotification('Session expired!')
       reset()
     })
 }
 
-function getState({ commit }) {
+function getState({ commit, dispatch }) {
   const loggedIn = LocalStorage.getItem('user.loggedIn') || false
-  const details = LocalStorage.getItem('user.details') || {}
 
-  commit('setLoggedIn', loggedIn)
-  commit('setDetails', details)
+  if (loggedIn) {
+    axios.get(sanctum).then(() => {
+      axios
+        .get('/api/me')
+        .then((response) => {
+          const data = response.data.data
+          commit('setLoggedIn', true)
+          commit('setDetails', data)
+          commit('setRoles', data)
+          commit('setPermissions', data)
+
+          dispatch('permission/setRoutes', data, { root: true })
+        })
+        .catch((error) => {
+          commit('resetState')
+          this.$router.replace({ name: 'login' })
+        })
+    })
+  } else {
+    commit('resetState')
+    commit('permission/resetState', null, { root: true })
+    this.$router.replace({ name: 'login' })
+  }
 }
 
 export { login, logout, getState }
