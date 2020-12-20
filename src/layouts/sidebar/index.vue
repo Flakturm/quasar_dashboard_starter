@@ -36,7 +36,6 @@
           :key="childIndex"
           :to="{ name: child.name }"
           active-class="tab-active"
-          exact
           class="q-ma-sm rounded-borders"
           clickable
           v-ripple

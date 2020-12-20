@@ -33,21 +33,31 @@ const routes = [
   {
     path: '/users',
     name: 'users',
-    redirect: '/users',
+    redirect: '/users/members',
     component: DashboardLayout,
     meta: {
-      title: '用戶',
+      title: '用戶管理',
       icon: 'fas fa-users',
       root: true,
       children: true
     },
     children: [
       {
-        path: '',
+        path: 'members',
         name: 'users.members',
         component: () => import('pages/users'),
         meta: {
-          title: '一般用戶'
+          title: '會員',
+          permissions: ['access users.members']
+        }
+      },
+      {
+        path: 'vendors',
+        name: 'users.vendors',
+        component: () => import('pages/users'),
+        meta: {
+          title: '經銷商',
+          permissions: ['access users.vendors']
         }
       },
       {
@@ -55,17 +65,37 @@ const routes = [
         name: 'users.admin',
         component: () => import('pages/users'),
         meta: {
-          title: '後台管理者',
-          roles: ['admin']
+          title: '管理員',
+          permissions: ['access users.admin']
         }
       },
       {
-        path: 'permissions',
-        name: 'users.permissions',
-        component: () => import('pages/users/Permissions'),
+        path: 'roles',
+        name: 'users.roles',
+        component: () => import('pages/users/roles'),
         meta: {
-          title: '後台管理權限',
-          permissions: ['manage permissions']
+          title: '權限管理',
+          permissions: ['access users.permissions']
+        }
+      },
+      {
+        path: 'roles/new',
+        name: 'users.roles.add',
+        component: () => import('pages/users/roles/Add'),
+        meta: {
+          title: '新增角色',
+          permissions: ['access users.permissions'],
+          hidden: true
+        }
+      },
+      {
+        path: 'roles/:id',
+        name: 'users.roles.edit',
+        component: () => import('pages/users/roles/Edit'),
+        meta: {
+          title: '編輯角色',
+          permissions: ['access users.permissions'],
+          hidden: true
         }
       }
     ]

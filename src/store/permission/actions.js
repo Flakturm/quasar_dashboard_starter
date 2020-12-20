@@ -15,7 +15,10 @@ function getRootRoutes(routes) {
 
 function getRoutesWithoutChildren(routes, payload) {
   return routes.filter(
-    (route) => route.meta.children === false && hasPermission(route, payload)
+    (route) =>
+      route.meta.children === false &&
+      hasPermission(route, payload) &&
+      excludeHidden(route)
   )
 }
 
@@ -24,11 +27,11 @@ function getRoutesWithChildren(routes, payload) {
 
   items.forEach((item) => {
     item.children = item.children.filter((childItem) => {
-      return hasPermission(childItem, payload)
+      return hasPermission(childItem, payload) && excludeHidden(childItem)
     })
   })
 
-  return items
+  return items.filter((route) => route.children.length > 0)
 }
 
 function hasPermission(route, payload) {
@@ -43,6 +46,10 @@ function hasPermission(route, payload) {
   } else {
     return true
   }
+}
+
+function excludeHidden(route) {
+  return route.meta.hidden ? false : true
 }
 
 export { setRoutes }

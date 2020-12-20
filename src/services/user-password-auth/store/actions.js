@@ -44,7 +44,7 @@ function logout({ commit }) {
   const reset = () => {
     commit('resetState')
     commit('permission/resetState', null, { root: true })
-    this.$router.replace({ name: 'login' })
+    location.href = '/login'
   }
 
   axios
@@ -61,23 +61,29 @@ function getState({ commit, dispatch }) {
   const loggedIn = LocalStorage.getItem('user.loggedIn') || false
 
   if (loggedIn) {
-    axios.get(sanctum).then(() => {
-      axios
-        .get('/api/me')
-        .then((response) => {
-          const data = response.data.data
-          commit('setLoggedIn', true)
-          commit('setDetails', data)
-          commit('setRoles', data)
-          commit('setPermissions', data)
+    axios
+      .get(sanctum)
+      .then(() => {
+        axios
+          .get('/api/me')
+          .then((response) => {
+            const data = response.data.data
+            commit('setLoggedIn', true)
+            commit('setDetails', data)
+            commit('setRoles', data)
+            commit('setPermissions', data)
 
-          dispatch('permission/setRoutes', data, { root: true })
-        })
-        .catch((error) => {
-          commit('resetState')
-          this.$router.replace({ name: 'login' })
-        })
-    })
+            dispatch('permission/setRoutes', data, { root: true })
+          })
+          .catch((error) => {
+            commit('resetState')
+            this.$router.replace({ name: 'login' })
+          })
+      })
+      .catch((error) => {
+        commit('resetState')
+        this.$router.replace({ name: 'login' })
+      })
   } else {
     commit('resetState')
     commit('permission/resetState', null, { root: true })

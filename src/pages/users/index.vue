@@ -38,20 +38,50 @@
           class="q-ml-md"
           color="positive"
           label="新增"
-          @click="userDialog = true"
+          @click="dialog = true"
         />
+      </template>
+
+      <template v-slot:body-cell-roles="props">
+        <q-td :props="props">
+          <q-chip
+            color="orange-7"
+            text-color="white"
+            :label="props.row.roles[0]"
+          />
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-action="props">
+        <q-td :props="props">
+          <div class="q-gutter-sm">
+            <q-btn
+              dense
+              color="primary"
+              icon="edit"
+              @click="handleEdit(props.row)"
+            />
+            <q-btn
+              dense
+              color="red"
+              icon="delete"
+              @click="onDelete(props.row)"
+            />
+          </div>
+        </q-td>
       </template>
     </q-table>
 
     <q-dialog
-      v-model="userDialog"
+      v-model="dialog"
+      @hide="clearFormData"
       persistent
     >
       <q-card style="width: 400px; max-width: 60vw;">
         <q-form @submit="onSubmit">
           <q-card-section>
             <div class="text-h6">
-              新增
+              {{ dialogTitle }}
               <q-btn
                 round
                 flat
@@ -72,11 +102,24 @@
 
           <q-card-section>
             <q-list>
+              <q-item
+                class="q-px-none"
+                v-if="!isAdminPage && editMode"
+              >
+                <q-item-section>
+                  <q-item-label>轉成{{ type === 'vendors' ? '會員' : '經銷商' }}</q-item-label>
+                  <q-toggle
+                    v-model="formData.member_vendor_toggle"
+                    color="primary"
+                  />
+                </q-item-section>
+              </q-item>
               <q-item class="q-px-none">
                 <q-item-section>
                   <q-item-label class="q-pb-xs">名稱</q-item-label>
                   <q-input
                     v-model="formData.name"
+                    clearable
                     dense
                     outlined
                     lazy-rules
@@ -91,6 +134,7 @@
                   <q-item-label class="q-pb-xs">Email</q-item-label>
                   <q-input
                     v-model="formData.email"
+                    clearable
                     dense
                     outlined
                     lazy-rules
@@ -100,19 +144,39 @@
                   />
                 </q-item-section>
               </q-item>
+              <q-item
+                class="q-px-none"
+                v-if="isAdminPage"
+              >
+                <q-item-section>
+                  <q-item-label class="q-pb-xs">角色</q-item-label>
+                  <q-select
+                    v-model="formData.roles"
+                    :options="roles"
+                    clearable
+                    outlined
+                    dense
+                    lazy-rules
+                    no-error-icon
+                    hide-bottom-space
+                    :rules="[isRequired]"
+                  />
+                </q-item-section>
+              </q-item>
               <q-item class="q-px-none">
                 <q-item-section>
                   <q-item-label class="q-pb-xs">密碼</q-item-label>
                   <q-input
                     v-model="formData.password"
                     type="password"
+                    clearable
                     dense
                     outlined
                     maxlength="12"
                     lazy-rules
                     no-error-icon
                     hide-bottom-space
-                    :rules="[isRequired, isValidPassword]"
+                    :rules="editMode ? [formData.password ? isValidPassword : ''] : [isRequired, isValidPassword]"
                   />
                 </q-item-section>
               </q-item>
@@ -151,33 +215,21 @@ export default {
       return this.$route.meta.title
     },
 
-    showAdminUser () {
-      return this.$route.name === 'users.admin'
+    dialogTitle () {
+      const title = this.editMode ? '編輯' : '新增'
+      return title + this.pageTitle
     },
 
-    url () {
-      let url = '/api/dashboard/users'
-      url += this.showAdminUser ? '/admin' : ''
-      return url
-    }
-  },
+    type () {
+      return this.$route.name.replace('users.', '')
+    },
 
-  data () {
-    return {
-      formData: {},
-      errors: {},
-      userDialog: false,
-      tableLoading: false,
-      formLoading: false,
-      pagination: {
-        filter: '',
-        rowsPerPage: 10,
-        rowsNumber: 10,
-        descending: true,
-        sortBy: 'id'
-      },
-      list: [],
-      columns: [
+    isAdminPage () {
+      return this.type === 'admin'
+    },
+
+    columns () {
+      let columns = [
         {
           label: 'Id',
           name: 'id',
@@ -204,13 +256,55 @@ export default {
           name: 'name',
           field: 'name',
           align: 'left'
+        },
+        {
+          label: '',
+          name: 'action',
+          field: 'action'
         }
       ]
+
+      if (this.isAdminPage) {
+        columns.splice(4, 0, {
+          label: '角色',
+          name: 'roles',
+          field: 'roles',
+          align: 'center'
+        })
+      }
+
+      return columns
+    },
+
+    url () {
+      return `${process.env.DASHBOARD_API_PREFIX}/users/${this.type}`
+    }
+  },
+
+  data () {
+    return {
+      formData: {},
+      roles: [],
+      editMode: false,
+      errors: {},
+      dialog: false,
+      tableLoading: false,
+      formLoading: false,
+      pagination: {
+        filter: '',
+        rowsPerPage: 10,
+        rowsNumber: 10,
+        descending: true,
+        sortBy: 'id'
+      },
+      list: []
     }
   },
 
   mounted () {
     this.loadRequest()
+
+    if (this.isAdminPage) this.fetchRoles()
   },
 
   methods: {
@@ -243,24 +337,72 @@ export default {
         })
     },
 
+    async fetchRoles () {
+      const { data } = await this.$axios.get(`${process.env.DASHBOARD_API_PREFIX}/roles`)
+      this.roles = data.map(item => {
+        return [item.name]
+      })
+    },
+
     onSubmit () {
       this.formLoading = true
 
-      this.$axios.post(this.url, this.formData)
-        .then((response) => {
-          this.loadRequest()
-          this.formLoading = false
-          this.userDialog = false
-        }).catch((err) => {
-          this.errors = err.response.data.errors
-          this.formLoading = false
-        })
+      const axios = this.editMode ? this.$axios.put(`${this.url}/${this.formData.id}`, this.formData) : this.$axios.post(this.url, this.formData)
+      axios.then((response) => {
+        this.loadRequest()
+        this.formLoading = false
+        this.dialog = false
+      }).catch((err) => {
+        this.errors = err.response.data.errors
+        this.formLoading = false
+      })
+
+    },
+
+    async handleEdit (item) {
+      this.editMode = true
+      this.dialog = true
+
+      const { data } = await this.$axios.get(`${this.url}/${item.id}`)
+      this.formData = data
+    },
+
+    onDelete (item) {
+      this.$q.dialog({
+        title: `刪除${this.pageTitle}`,
+        message: `確定刪除 ${item.name}?`,
+        ok: {
+          label: '刪除',
+          color: 'negative'
+        },
+        cancel: '取消'
+      }).onOk(() => {
+        this.$axios.delete(`${this.url}/${item.id}`)
+          .then(() => {
+            this.loadRequest()
+            this.$q.notify({
+              message: `${item.name} 已刪除`,
+              color: 'positive',
+              icon: 'check'
+            })
+          })
+
+      })
+    },
+
+    clearFormData () {
+      this.editMode = false
+      this.errors = {}
+      this.formData = {}
     }
   },
 
   watch: {
-    showAdminUser () {
-      this.loadRequest()
+    '$route.name': {
+      handler: function (val) {
+        this.pagination.filter = ''
+        this.loadRequest()
+      }
     }
   }
 }
