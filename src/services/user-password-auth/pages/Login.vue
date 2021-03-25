@@ -109,7 +109,9 @@ export default {
       this.login(this.formData)
         .catch((error) => {
           this.loading = false
-          this.errors = error.response.data.errors
+          if (error.response) {
+            this.errors = error.response.data.errors
+          }
         })
     }
   }

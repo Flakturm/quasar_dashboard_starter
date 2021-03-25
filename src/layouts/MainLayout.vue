@@ -51,6 +51,15 @@
                 <q-separator />
                 <q-item
                   clickable
+                  @click="dialog = true"
+                >
+                  <q-item-section>
+                    Change password
+                  </q-item-section>
+                </q-item>
+                <q-separator />
+                <q-item
+                  clickable
                   class="GL__menu-link"
                 >
                   <q-item-section @click="logout">Sign out</q-item-section>
@@ -89,6 +98,56 @@
 
     </q-drawer>
 
+    <q-dialog
+      v-model="dialog"
+      @hide="onReset"
+    >
+      <q-card>
+        <q-form @submit="onSubmit">
+          <q-card-section v-if="Object.keys(errors).length">
+            <validation-errors :errors="errors" />
+          </q-card-section>
+          <q-card-section>
+            <q-input
+              filled
+              v-model="formData.password"
+              :type="passwordVisible ? 'text' : 'password'"
+              label="Password"
+              maxlength="20"
+              lazy-rules
+              no-error-icon
+              :rules="[isRequired, isValidPassword]"
+            >
+              <template v-slot:append>
+                <q-icon
+                  :name="passwordVisible ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="passwordVisible = !passwordVisible"
+                />
+              </template>
+            </q-input>
+          </q-card-section>
+          <q-card-actions
+            class="q-mt-none"
+            align="right"
+          >
+            <q-btn
+              flat
+              label="Close"
+              v-close-popup
+            />
+            <q-btn
+              label="Save"
+              type="submit"
+              color="primary"
+              :disable="loading"
+              :loading="loading"
+            />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
+
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -97,12 +156,16 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import mixinValidation from 'src/mixins/validation'
 import Sidebar from './sidebar'
+import ValidationErrors from 'components/ValidationErrors'
 
 export default {
   name: 'DashboardLayout',
 
-  components: { Sidebar },
+  mixins: [mixinValidation],
+
+  components: { Sidebar, ValidationErrors },
 
   computed: {
     ...mapState('auth', ['details']),
@@ -118,12 +181,46 @@ export default {
 
   data () {
     return {
-      left: false
+      left: false,
+      dialog: false,
+      formData: {},
+      errors: {},
+      passwordVisible: false,
+      loading: false
     }
   },
 
   methods: {
-    ...mapActions('auth', ['getState', 'logout']),
+    ...mapActions('auth', ['updatePassword', 'getState', 'logout']),
+
+    onSubmit () {
+      this.clearError()
+      this.loading = true
+      this.updatePassword(this.formData)
+        .then(() => {
+          this.loading = false
+          this.$q.notify({
+            message: '更新成功',
+            color: 'positive',
+            icon: 'check'
+          })
+          this.dialog = false
+        }).catch(error => {
+          this.loading = false
+          if (error.response) {
+            this.errors = error.response.data.errors
+          }
+        })
+    },
+
+    onReset () {
+      this.formData = {}
+      this.clearError()
+    },
+
+    clearError () {
+      this.errors = {}
+    }
   }
 }
 </script>
@@ -141,10 +238,6 @@ export default {
 
 .drawer_dark {
   background-color: #010101f2;
-}
-
-.tab-active {
-  background-color: green;
 }
 
 body {

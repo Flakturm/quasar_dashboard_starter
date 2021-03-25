@@ -10,8 +10,6 @@ function setLoggedIn(state, value) {
 function setDetails(state, payload) {
   const { roles, permissions, ...reducedPayload } = payload
   state.details = reducedPayload
-
-  // LocalStorage.set('user.details', reducedPayload)
 }
 
 function setRoles(state, payload) {
@@ -19,7 +17,9 @@ function setRoles(state, payload) {
 }
 
 function setPermissions(state, payload) {
-  state.permissions = payload.permissions
+  if (payload.permissions) {
+    state.permissions = payload.permissions
+  }
 }
 
 function resetState(state) {

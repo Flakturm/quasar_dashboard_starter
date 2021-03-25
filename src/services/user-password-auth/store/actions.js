@@ -1,22 +1,21 @@
 import { LocalStorage } from 'quasar'
-import axios from 'axios'
+import { mainAxios } from 'boot/axios'
 
 const sanctum = '/sanctum/csrf-cookie'
 
 function login({ commit, dispatch }, payload) {
   return new Promise((resolve, reject) => {
-    axios
+    mainAxios
       .get(sanctum)
       .then(() => {
-        axios
+        mainAxios
           .post('/api/login', payload)
           .then(() => {
             commit('setLoggedIn', true)
 
-            axios
+            mainAxios
               .get('/api/me')
-              .then((response) => {
-                const data = response.data.data
+              .then(({ data }) => {
                 commit('setDetails', data)
                 commit('setRoles', data)
                 commit('setPermissions', data)
@@ -26,6 +25,7 @@ function login({ commit, dispatch }, payload) {
                 this.$router.replace({ name: 'dashboard' })
               })
               .catch((error) => {
+                console.log(error)
                 commit('resetState')
                 reject(error)
               })
@@ -40,6 +40,22 @@ function login({ commit, dispatch }, payload) {
   })
 }
 
+function updatePassword({}, payload) {
+  return new Promise((resolve, reject) => {
+    mainAxios
+      .post(
+        `${process.env.DASHBOARD_API_PREFIX}/users/update-password`,
+        payload
+      )
+      .then(() => {
+        resolve()
+      })
+      .catch((error) => {
+        reject(error)
+      })
+  })
+}
+
 function logout({ commit }) {
   const reset = () => {
     commit('resetState')
@@ -47,7 +63,7 @@ function logout({ commit }) {
     location.href = '/login'
   }
 
-  axios
+  mainAxios
     .post('/api/logout')
     .then(() => {
       reset()
@@ -61,13 +77,12 @@ function getState({ commit, dispatch }) {
   const loggedIn = LocalStorage.getItem('user.loggedIn') || false
 
   if (loggedIn) {
-    axios
+    mainAxios
       .get(sanctum)
       .then(() => {
-        axios
+        mainAxios
           .get('/api/me')
-          .then((response) => {
-            const data = response.data.data
+          .then(({ data }) => {
             commit('setLoggedIn', true)
             commit('setDetails', data)
             commit('setRoles', data)
@@ -91,4 +106,4 @@ function getState({ commit, dispatch }) {
   }
 }
 
-export { login, logout, getState }
+export { login, logout, updatePassword, getState }

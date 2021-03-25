@@ -35,7 +35,7 @@ function getRoutesWithChildren(routes, payload) {
 }
 
 function hasPermission(route, payload) {
-  if (payload.roles.includes('root')) {
+  if (payload.roles.includes('Root')) {
     return true
   } else if (route.meta && route.meta.permissions) {
     return payload.permissions.some((permission) =>

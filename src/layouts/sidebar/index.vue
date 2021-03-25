@@ -63,11 +63,12 @@ export default {
   name: 'Sidebar',
 
   computed: {
-    ...mapState('auth', ['roles', 'permissions']),
-    ...mapState('permission', ['routesWithChildren', 'routesWithoutChildren']),
+    ...mapState('permission', ['routesWithChildren', 'routesWithoutChildren'])
   },
 }
 </script>
 
-<style>
+<style lang="sass">
+.tab-active
+  background-color: green
 </style>

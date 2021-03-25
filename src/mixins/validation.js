@@ -10,7 +10,7 @@ export default {
     },
 
     isValidPassword(val) {
-      return val.length > 7 || '最少 8 碼'
+      return (val.length >= 8 && val.length <= 20) || '最少 8 碼, 最多 20 碼'
     }
   }
 }

@@ -96,7 +96,7 @@ module.exports = function(/* ctx */) {
       importStrategy: 'auto',
 
       // Quasar plugins
-      plugins: ['LocalStorage', 'Loading', 'Notify']
+      plugins: ['LocalStorage', 'Loading', 'Notify', 'Dialog']
     },
 
     // animations: 'all', // --- includes all animations
